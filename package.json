@@ -1,0 +1,21 @@
+{
+  "name": "sas-task-mcp",
+  "version": "1.0.0",
+  "repository": "github:Abdullah-Luay/TASK-MCP",
+  "description": "MCP server that logs completed work as tasks in the SAS task manager",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.31.0",
+    "zod": "^4.6.5"
+  },
+  "bin": {
+    "sas-task-mcp": "index.js"
+  }
+}
