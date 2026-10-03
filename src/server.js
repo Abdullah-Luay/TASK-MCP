@@ -2,7 +2,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
-import { api } from "./api.js";
+import { api, currentUserId } from "./api.js";
 import { findProjectRoot, createTemplates, loadProject, CONFIG_FILE, AUTH_FILE, AUTH_EXAMPLE_FILE } from "./config.js";
 import { DROPDOWNS, loadLookups, projectEpics } from "./lookups.js";
 
@@ -159,7 +159,7 @@ export async function startServer(version) {
         const body = {
           title: args.title,
           description: args.description,
-          assigneeId: auth.userId,
+          assigneeId: await currentUserId(auth),
           teamId: config.teamId,
           dueDate: args.dueDate ?? null,
           originalEstimateMinutes: minutes,

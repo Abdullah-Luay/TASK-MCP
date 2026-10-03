@@ -8,7 +8,7 @@ export const AUTH_FILE = ".sas-task.auth.json";
 export const AUTH_EXAMPLE_FILE = ".sas-task.auth.example.json";
 
 const CONFIG_TEMPLATE = { projectId: "", teamId: "" };
-const AUTH_TEMPLATE = { email: "", password: "", userId: "" };
+const AUTH_TEMPLATE = { email: "", password: "" };
 
 // The project root is the nearest folder (upwards) that has .sas-task.json.
 export function findProjectRoot(start) {
@@ -63,7 +63,7 @@ export function loadProject(dir) {
   const missing = [
     // projectId is optional: it's only the suggested default when the agent asks.
     ...["teamId"].filter((k) => !config[k]).map((k) => `${CONFIG_FILE} → ${k}`),
-    ...["email", "password", "userId"].filter((k) => !auth[k]).map((k) => `${AUTH_FILE} → ${k}`),
+    ...["email", "password"].filter((k) => !auth[k]).map((k) => `${AUTH_FILE} → ${k}`),
   ];
   return { config, auth, missing };
 }

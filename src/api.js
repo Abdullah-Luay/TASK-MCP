@@ -106,6 +106,11 @@ async function fetchToken({ email, password }, force) {
   }
 }
 
+// The signed-in user's ID, read from the login token.
+export async function currentUserId(auth) {
+  return decodeJwt(await getToken(auth)).sub;
+}
+
 // Authenticated request; renews the session once if the token is rejected.
 export async function api(auth, method, path, body) {
   const token = await getToken(auth);

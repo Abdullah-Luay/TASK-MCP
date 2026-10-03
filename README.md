@@ -15,7 +15,13 @@ Requires Node.js 18+ and git.
 claude mcp add sas-tasks --scope user -- npx -y github:Abdullah-Luay/TASK-MCP
 ```
 
-On Windows:
+On Windows (PowerShell; the quotes around `--` are needed, or PowerShell drops it):
+
+```powershell
+claude mcp add sas-tasks --scope user '--' cmd /c npx -y github:Abdullah-Luay/TASK-MCP
+```
+
+On Windows (Command Prompt or Git Bash):
 
 ```bash
 claude mcp add sas-tasks --scope user -- cmd /c npx -y github:Abdullah-Luay/TASK-MCP
@@ -32,7 +38,7 @@ project root and asks you to fill them in:
 |---|---|---|
 | `.sas-task.json` | The team, and the project this repo usually belongs to | **Yes**, shared by the team |
 | `.sas-task.auth.example.json` | An empty template of the auth file | **Yes**, so teammates see the format |
-| `.sas-task.auth.json` | **Your** email, password and user ID | **Never**. It's added to `.gitignore` automatically |
+| `.sas-task.auth.json` | **Your** email and password | **Never**. It's added to `.gitignore` automatically |
 
 `.sas-task.json`:
 
@@ -48,14 +54,12 @@ project root and asks you to fill them in:
 ```json
 {
   "email": "you@sasconsults.com",
-  "password": "your task-manager password",
-  "userId": "your user ID in the task manager"
+  "password": "your task-manager password"
 }
 ```
 
 **Where to find the IDs:** in the task manager, press **F12**, open the **Network** tab and create any
-task. In the `tasks` request's **Payload**, `teamId` is your team and `assigneeId` is your user ID.
-The project ID is in the request URL: `.../api/projects/<projectId>/tasks`.
+task. In the `tasks` request's **Payload**, `teamId` is your team. The project ID is in the request URL: `.../api/projects/<projectId>/tasks`.
 
 Teammates who clone a repo that's already set up only need to fill in their own
 `.sas-task.auth.json`. Claude creates it for them on first use.
@@ -72,7 +76,7 @@ Claude will:
 2. Ask which **project** (suggesting this repo's usual one).
 3. Ask for **epic**, **category**, **priority**, **labels** and **time spent**
    (e.g. `1h 30m`), suggesting the defaults.
-4. Create the task, assigned to you, and tell you its ID.
+4. Create the task, assigned to you (your user is taken from your login), and tell you its ID.
 
 ## How it works
 
@@ -95,6 +99,7 @@ Claude will:
 | "Login failed … wrong email or password" | Check `.sas-task.auth.json` |
 | "… doesn't exist. Options: …" | Pick one of the listed options |
 | `sas-tasks` not in `claude mcp list` | Re-run the install command and restart Claude Code |
+| `error: unknown option '-y'` when installing | You're in PowerShell: write `'--'` with quotes, or use `claude.cmd` instead of `claude` |
 
 ## Development
 
