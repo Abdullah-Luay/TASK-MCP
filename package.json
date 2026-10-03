@@ -1,21 +1,26 @@
 {
   "name": "sas-task-mcp",
-  "version": "1.0.0",
-  "repository": "github:Abdullah-Luay/TASK-MCP",
-  "description": "MCP server that logs completed work as tasks in the SAS task manager",
-  "main": "index.js",
-  "scripts": {
-    "start": "node index.js"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "version": "2.0.0",
+  "description": "MCP server that uploads Claude Code work as tasks to the SAS task manager",
   "type": "module",
+  "bin": {
+    "sas-task-mcp": "index.js"
+  },
+  "main": "index.js",
+  "files": [
+    "index.js",
+    "src/"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "repository": "github:Abdullah-Luay/TASK-MCP",
+  "license": "ISC",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.31.0",
     "zod": "^4.6.5"
   },
-  "bin": {
-    "sas-task-mcp": "index.js"
+  "scripts": {
+    "start": "node index.js"
   }
 }
