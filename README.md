@@ -29,25 +29,15 @@ claude mcp add sas-tasks --scope user -- cmd /c npx -y github:Abdullah-Luay/TASK
 
 Restart Claude Code, then run `claude mcp list` and check that `sas-tasks` is connected.
 
-## 2. Fill in the config (once per project)
+## 2. Add your login (once per project)
 
 The first time you ask Claude to upload a task in a project, it creates these files in the
-project root and asks you to fill them in:
+project root and asks you to fill in your login:
 
 | File | Contains | Commit it? |
 |---|---|---|
-| `.sas-task.json` | The team, and the project this repo usually belongs to | **Yes**, shared by the team |
-| `.sas-task.auth.example.json` | An empty template of the auth file | **Yes**, so teammates see the format |
-| `.sas-task.auth.json` | **Your** email and password | **Never**. It's added to `.gitignore` automatically |
-
-`.sas-task.json`:
-
-```json
-{
-  "projectId": "optional: the project Claude suggests first",
-  "teamId": "your team's ID"
-}
-```
+| `.sas-task.auth.json` | **Your** task-manager email and password | **Never**. It's added to `.gitignore` automatically |
+| `.sas-task.auth.example.json` | An empty template of the file above | **Yes**, so teammates see the format |
 
 `.sas-task.auth.json`:
 
@@ -58,11 +48,8 @@ project root and asks you to fill them in:
 }
 ```
 
-**Where to find the IDs:** in the task manager, press **F12**, open the **Network** tab and create any
-task. In the `tasks` request's **Payload**, `teamId` is your team. The project ID is in the request URL: `.../api/projects/<projectId>/tasks`.
-
-Teammates who clone a repo that's already set up only need to fill in their own
-`.sas-task.auth.json`. Claude creates it for them on first use.
+That's all. Your user is taken from your login, and the project and everything else are chosen
+from the task manager's lists each time you upload a task.
 
 ## 3. Use it
 
@@ -73,7 +60,7 @@ Just say it when you're done:
 Claude will:
 
 1. Write the title and a description of what was done (with commit hashes).
-2. Ask which **project** (suggesting this repo's usual one).
+2. Ask which **project**.
 3. Ask for **epic**, **category**, **priority**, **labels** and **time spent**
    (e.g. `1h 30m`), suggesting the defaults.
 4. Create the task, assigned to you (your user is taken from your login), and tell you its ID.
@@ -95,7 +82,7 @@ Claude will:
 
 | Message | Fix |
 |---|---|
-| "The task app isn't set up for this project yet" | Fill in the fields it lists, then ask again |
+| "The task app login isn't set up for this project yet" | Fill in `.sas-task.auth.json`, then ask again |
 | "Login failed … wrong email or password" | Check `.sas-task.auth.json` |
 | "… doesn't exist. Options: …" | Pick one of the listed options |
 | `sas-tasks` not in `claude mcp list` | Re-run the install command and restart Claude Code |

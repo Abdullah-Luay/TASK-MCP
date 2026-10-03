@@ -1,9 +1,9 @@
-// MCP server: sets up a project's config files and logs completed work as tasks.
+// MCP server: sets up a project's login file and logs completed work as tasks.
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 import { api, currentUserId } from "./api.js";
-import { findProjectRoot, createTemplates, loadProject, CONFIG_FILE, AUTH_FILE, AUTH_EXAMPLE_FILE } from "./config.js";
+import { findProjectRoot, createTemplates, loadProject, AUTH_FILE, AUTH_EXAMPLE_FILE } from "./config.js";
 import { DROPDOWNS, loadLookups, projectEpics } from "./lookups.js";
 
 // "1h 30m", "90m", "2h", "1.5h" or a plain number of minutes -> minutes.
@@ -24,20 +24,19 @@ function errorResult(t) {
   return { isError: true, content: [{ type: "text", text: t }] };
 }
 
-// Find (or create) the project's setup files. Returns { project } or { error }.
+// Find (or create) the project's login file. Returns { project } or { error }.
 function openProject(projectDir) {
-  const start = projectDir || process.cwd();
-  const dir = findProjectRoot(start) ?? start;
+  const dir = findProjectRoot(projectDir || process.cwd());
   try {
-    createTemplates(dir); // Also creates a teammate's own auth file on first use.
+    createTemplates(dir);
     const project = loadProject(dir);
     if (!project.missing.length) return { project };
     return {
       error:
-        `The task app isn't set up for this project yet. Ask the user to fill in:\n` +
+        `The task app login isn't set up for this project yet. Ask the user to fill in:\n` +
         project.missing.map((m) => `  - ${m}`).join("\n") +
-        `\n\nFiles are in ${dir}. ${AUTH_FILE} is private (git-ignored); ` +
-        `${CONFIG_FILE} and ${AUTH_EXAMPLE_FILE} should be committed. Try again once they're filled in.`,
+        `\n\nThe file is in ${dir}. ${AUTH_FILE} is private (git-ignored); ` +
+        `${AUTH_EXAMPLE_FILE} is the template to commit. Try again once it's filled in.`,
     };
   } catch (e) {
     return { error: e.message };
@@ -49,11 +48,11 @@ function findOption(list, value) {
   return list.find((o) => o.id === value || o.name.toLowerCase() === v);
 }
 
-function formatList(key, list, extra = "") {
+function formatList(key, list) {
   const d = DROPDOWNS[key];
   const tags = [d.required ? "required" : "optional", d.multiple ? "pick several" : "pick one"];
   const names = list.map((o) => (o.suggested ? `${o.name} (suggested)` : o.name));
-  return `${d.label} [${key}] (${tags.join(", ")}): ${names.join(" / ") || "(none available)"}${extra}`;
+  return `${d.label} [${key}] (${tags.join(", ")}): ${names.join(" / ") || "(none available)"}`;
 }
 
 const projectDirParam = z
@@ -76,15 +75,11 @@ export async function startServer(version) {
         "epics to that project where possible.",
       inputSchema: {
         project: z.string().optional().describe("Project name or ID the user picked"),
-        projectDir: projectDirParam,
       },
     },
-    async ({ project: projectArg, projectDir }) => {
+    async ({ project: projectArg }) => {
       try {
         const lookups = await loadLookups();
-        const root = findProjectRoot(projectDir || process.cwd());
-        const usualId = root ? loadProject(root).config.projectId : null;
-        const usual = lookups.projects.find((p) => p.id === usualId);
         const chosen = projectArg ? findOption(lookups.projects, projectArg) : null;
         if (projectArg && !chosen) {
           return errorResult(`Project "${projectArg}" doesn't exist.\n\n${formatList("project", lookups.projects)}`);
@@ -92,7 +87,7 @@ export async function startServer(version) {
         const epics = projectEpics(lookups, chosen?.id);
         return text(
           [
-            formatList("project", lookups.projects, usual ? `\n  → This repo's usual project: ${usual.name}` : ""),
+            formatList("project", lookups.projects),
             formatList("epic", epics),
             formatList("category", lookups.categories),
             formatList("priority", lookups.priorities),
@@ -114,8 +109,8 @@ export async function startServer(version) {
         "says yes to logging it. Steps: (1) write a short title and a description of what was done, including " +
         "commit hashes; (2) call get_task_options and ASK THE USER for project, epic, category, " +
         "priority, labels and the time spent. Offer the suggested options, never pick for them; " +
-        "(3) call this tool. If the project isn't set up yet, this tool creates " +
-        "the setup files and tells you what the user must fill in.",
+        "(3) call this tool. If the user's login isn't set up yet, this tool creates " +
+        "the login file and tells you what the user must fill in.",
       inputSchema: {
         title: z.string().min(1).describe("Short task title, e.g. 'Fix outer join in AssignmentRespondView'"),
         description: z.string().default("").describe("What was done and why; list commits/files touched"),
@@ -132,7 +127,7 @@ export async function startServer(version) {
     async (args) => {
       const { project: setup, error } = openProject(args.projectDir);
       if (error) return errorResult(error);
-      const { config, auth } = setup;
+      const { auth } = setup;
 
       const minutes = args.estimate ? parseEstimate(args.estimate) : null;
       if (args.estimate && !minutes) {
@@ -160,7 +155,7 @@ export async function startServer(version) {
           title: args.title,
           description: args.description,
           assigneeId: await currentUserId(auth),
-          teamId: config.teamId,
+          teamId: null,
           dueDate: args.dueDate ?? null,
           originalEstimateMinutes: minutes,
           parentTaskId: null,

@@ -1,24 +1,26 @@
-// Project files: .sas-task.json (committed), .sas-task.auth.json (private)
-// and .sas-task.auth.example.json (committed template for the private one).
+// Project files: .sas-task.auth.json (private login) and
+// .sas-task.auth.example.json (committed template for it).
 import { readFileSync, writeFileSync, existsSync, appendFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 
-export const CONFIG_FILE = ".sas-task.json";
 export const AUTH_FILE = ".sas-task.auth.json";
 export const AUTH_EXAMPLE_FILE = ".sas-task.auth.example.json";
 
-const CONFIG_TEMPLATE = { projectId: "", teamId: "" };
 const AUTH_TEMPLATE = { email: "", password: "" };
 
-// The project root is the nearest folder (upwards) that has .sas-task.json.
+// The project root: the nearest folder (upwards) with an auth file, else the git root, else `start`.
 export function findProjectRoot(start) {
-  let dir = resolve(start);
-  for (;;) {
-    if (existsSync(join(dir, CONFIG_FILE))) return dir;
-    const parent = dirname(dir);
-    if (parent === dir) return null;
-    dir = parent;
+  const from = resolve(start);
+  for (const marker of [AUTH_FILE, ".git"]) {
+    let dir = from;
+    for (;;) {
+      if (existsSync(join(dir, marker))) return dir;
+      const parent = dirname(dir);
+      if (parent === dir) break;
+      dir = parent;
+    }
   }
+  return from;
 }
 
 function readJson(file) {
@@ -45,25 +47,16 @@ function ignoreAuthFile(dir) {
   return true;
 }
 
-// Create whichever setup files are missing. Returns the names it created.
+// Create whichever setup files are missing.
 export function createTemplates(dir) {
-  const created = [];
-  if (writeJsonIfMissing(join(dir, CONFIG_FILE), CONFIG_TEMPLATE)) created.push(CONFIG_FILE);
-  if (writeJsonIfMissing(join(dir, AUTH_EXAMPLE_FILE), AUTH_TEMPLATE)) created.push(AUTH_EXAMPLE_FILE);
-  if (ignoreAuthFile(dir)) created.push(".gitignore entry");
-  if (writeJsonIfMissing(join(dir, AUTH_FILE), AUTH_TEMPLATE)) created.push(AUTH_FILE);
-  return created;
+  writeJsonIfMissing(join(dir, AUTH_EXAMPLE_FILE), AUTH_TEMPLATE);
+  ignoreAuthFile(dir);
+  writeJsonIfMissing(join(dir, AUTH_FILE), AUTH_TEMPLATE);
 }
 
-// Load both files and list anything still empty.
+// Load the auth file and list anything still empty.
 export function loadProject(dir) {
-  const config = readJson(join(dir, CONFIG_FILE));
-  const authPath = join(dir, AUTH_FILE);
-  const auth = existsSync(authPath) ? readJson(authPath) : {};
-  const missing = [
-    // projectId is optional: it's only the suggested default when the agent asks.
-    ...["teamId"].filter((k) => !config[k]).map((k) => `${CONFIG_FILE} → ${k}`),
-    ...["email", "password"].filter((k) => !auth[k]).map((k) => `${AUTH_FILE} → ${k}`),
-  ];
-  return { config, auth, missing };
+  const auth = readJson(join(dir, AUTH_FILE));
+  const missing = ["email", "password"].filter((k) => !auth[k]).map((k) => `${AUTH_FILE} → ${k}`);
+  return { auth, missing };
 }
